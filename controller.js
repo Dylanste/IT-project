@@ -453,6 +453,45 @@ var addTranscript = function(req, res) {
     })
 }
 
+
+var addGallery = function(req, res) {
+    var user1 = req.params.user;
+
+    const galleryPic = req.body;
+
+    Profile.findOneAndUpdate({user:user1},{$push:{gallery:{imagesource:galleryPic.imagesource, description:galleryPic.description}}},{new: true},function(err,user2){
+        if(err){
+            console.log(user2);
+            res.send("wrong");
+            
+        }else{
+            console.log(user2);
+           res.send("found");
+        }
+    })
+}
+
+var findGalleryPicAndDelete= function(req,res){
+    var user1=req.params.user;
+    
+    const gPic = req.body;
+    console.log(req.body);
+    
+    Profile.findOneAndUpdate({user:user1},{$pull:{gallery:{imagesource:gPic.imagesource,description:gPic.description}}},{new: true},function(err,user2){
+        if(err){
+            
+            res.send("wrong");
+            
+        }else{
+            
+           res.send(user2);
+        }
+    })
+};
+
+module.exports.findGalleryPicAndDelete=findGalleryPicAndDelete;
+module.exports.addGallery=addGallery;
+
 module.exports.addWork=addWork;
 module.exports.addweb=addweb;
 module.exports.changeName=changeName;
@@ -462,6 +501,7 @@ module.exports.addproject=addproject;
 module.exports.findWorkAndDelete=findWorkAndDelete;
 module.exports.findProjectAndDelete=findProjectAndDelete;
 module.exports.deleteEducation=deleteEducation;
+
 module.exports.addTranscript=addTranscript;
 module.exports.addProfilePicture=addProfilePicture;
 module.exports.findSkillAndDelete=findSkillAndDelete;

@@ -111,6 +111,7 @@ class Profile extends Component {
       skills: [],
       subjects: [],
       education: [],
+      gallery: [],
       website: '',
       phone: '',
       selectedFile: null,
@@ -121,6 +122,7 @@ class Profile extends Component {
       addsubjectname:'',
       addsubjectyear:'',
       addsubjectdescripition:'',
+      addgallerydescription:'',
       lang:'en'
     };
   this.onLogoutClick=this.onLogoutClick.bind(this);
@@ -173,20 +175,69 @@ onSubmitSubject = (e) =>{
     subjectname: this.state.addsubjectname,
     subjectdesc: this.state.addsubjectdescripition,
     year: this.state.addsubjectyear
-};
+  };
 
-console.log(userData);
+  console.log(userData);
 
-axios.put('/profilesub/'+this.props.auth.user,userData)
+  axios.put('/profilesub/'+this.props.auth.user,userData)
 
 
   this.setState({addsubjectname:''});
   this.setState({addsubjectdescripition:''});
   this.setState({addsubjectyear:''});
-  this.setState({showAdd:false});
+  this.setState({showAdd:false}); 
 
 
 }
+
+
+handleGalleryChange = event => {
+
+  event.preventDefault();
+  
+  this.setState({
+    addgallerydescription: event.target.value
+  })
+}
+
+onSubmitGalleryPhoto = (e) => {
+
+  e.preventDefault();
+
+  const fd = new FormData();
+
+  if (this.state.selectedFile == null) {
+    return (Error);
+  }
+
+  const photoDesc =  this.state.addgallerydescription;
+
+  fd.append('image', this.state.selectedFile);
+
+  axios.post('/img-upload', fd).then((postResponse) => {
+    console.log(postResponse);
+    this.newGP = postResponse.data.imageUrl;
+
+    const galleryPhoto = {
+      imagesource: this.newGP,
+      description: photoDesc
+    };
+
+    console.log(galleryPhoto);
+
+    axios.put('/addtogallery/' + this.props.auth.user, galleryPhoto).then(res => {
+      console.log(res);
+    })
+   
+  }, (err) => {
+    console.log(err);
+  })
+
+
+  this.setState({addgallerydescription:''});
+
+}
+
 
 
     onLogoutClick = (e) => {
@@ -203,6 +254,7 @@ axios.put('/profilesub/'+this.props.auth.user,userData)
                          bio:res.data[0].bio,
                          skills:res.data[0].skills,
                          subjects:res.data[0].subjects,
+                         gallery:res.data[0].gallery,
                          education:res.data[0].education,
                          website:res.data[0].website,
                          phone:res.data[0].phone,
@@ -215,6 +267,8 @@ axios.put('/profilesub/'+this.props.auth.user,userData)
 }
 
   fileSelectedHandler = event => {
+    event.preventDefault();
+
     this.setState({
       selectedFile: event.target.files[0]
     })
@@ -263,6 +317,9 @@ axios.put('/profilesub/'+this.props.auth.user,userData)
     }catch(err) {
       console.log(err);
     };
+    this.setState({
+      selectedFile:null
+    });
   }
 
 
@@ -308,16 +365,29 @@ axios.put('/profilesub/'+this.props.auth.user,userData)
     }catch(err) {
       console.log(err);
     };
+    this.setState({
+      selectedFile:null
+    });
   }
+  
   deletesubject(index,user) {
   axios.put('findanddeletsub/'+user,index)
-  .then(res=> this.setState({subjects:res.data.subjects}))
-  .catch(error => {
-    console.log("handlesubmit error for blog ", error)
-  })
+      .then(res=> this.setState({subjects:res.data.subjects}))
+      .catch(error => {
+        console.log("handlesubmit error for blog ", error)
+    })
 
     
   }
+  //onClick={()=>{this.deletesubject((this.state.subjects)[index],this.props.auth.user)}}
+
+  deletegallerypic(index, user) {
+    axios.put('deletefromgallery/' + user,index).then(res => this.setState({gallery:res.data.gallery}))
+    .catch(err => {
+      console.log("delete error for gallery", err);
+    })
+  }
+
   
   render() {
     
@@ -436,6 +506,33 @@ axios.put('/profilesub/'+this.props.auth.user,userData)
       </div>
 
    </section>
+
+   <section id = "gallery">
+   <div style={{backgroundColor:'#fff'}}>
+      <h2 style={{textAlign: 'center', paddingBlock:'10px',fontFamily:'Times New Roman'}}>Gallery</h2>
+      <p style= {{ fontSize: '25px'}} > {<ul style={{textAlign: 'center', paddingBlock:'20px' }}>
+        {(this.state.gallery).map( (item, index) =>
+          <li>
+            <h3> {item.description} </h3>
+            <img key={index} src={item.imagesource} alt="galleryPhoto"></img>
+            <Button onClick={()=>{this.deletegallerypic((this.state.gallery)[index],this.props.auth.user)}} > Delete Image</Button>
+          </li>
+          )}</ul> } 
+      </p>
+
+        <form name="uploadForm" onkeydown="return event.key != 'Enter';">
+          <div>
+            <input type = "file" accept=".jpg, .png" onChange={this.fileSelectedHandler}/>
+          </div>
+          <div>
+            <h2> Add Photo Description </h2>
+            <input type = "text" value = {this.state.addgallerydescription} onChange = {this.handleGalleryChange}/>
+          </div>
+          <div><button type="button" onClick={this.onSubmitGalleryPhoto}>Upload Gallery </button></div>
+          </form>
+      
+      </div>
+    </section>
 
    <section id="subjects">
       <div style={{backgroundColor:'#fff'}}>
